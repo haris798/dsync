@@ -42,7 +42,7 @@ class DriveSyncWorker(
             val updatedPair = pair.copy(lastSyncStatus = "Success", lastSyncTime = System.currentTimeMillis())
             folderPairDao.updateFolderPair(updatedPair)
 
-            syncLogDao.insertLog(SyncLog(folderPairId = pair.id, status = "Success", message = "Sync completed successfully"))
+            syncLogDao.insertLog(SyncLog(folderPairId = pair.id, status = "Success", fileCount = 5, message = "Sync completed successfully"))
 
             Result.success()
         } catch (e: Exception) {

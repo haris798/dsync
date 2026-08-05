@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -38,54 +39,68 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.remember
 import com.example.data.AppDatabase
 import com.example.data.SyncRepository
+import com.example.data.SettingsRepository
+import com.example.data.ThemePreference
 import com.example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DriveSyncApp() {
     val context = LocalContext.current
-    val database = AppDatabase.getDatabase(context)
-    val repository = SyncRepository(database.folderPairDao(), database.syncLogDao())
+    val database = remember { AppDatabase.getDatabase(context) }
+    val repository = remember { SyncRepository(database.folderPairDao(), database.syncLogDao()) }
+    val settingsRepository = remember { SettingsRepository(context) }
     val viewModel: DriveSyncViewModel = viewModel(
-        factory = DriveSyncViewModelFactory(repository)
+        factory = DriveSyncViewModelFactory(repository, settingsRepository)
     )
+
+    val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()
+    val isDarkTheme = when(themePreference) {
+        ThemePreference.DARK -> true
+        ThemePreference.LIGHT -> false
+        ThemePreference.SYSTEM -> isSystemInDarkTheme()
+    }
 
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
-    Scaffold(
-        containerColor = Background,
+    MyApplicationTheme(darkTheme = isDarkTheme) {
+        Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text(text = getTitleForRoute(currentRoute), fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = { /* TODO: drawer or menu */ }) {
-                        Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = OnBackground)
+                        Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 actions = {
                     if (currentRoute == "home") {
                         IconButton(onClick = { /* TODO: profile or account */ }) {
-                            Icon(Icons.Filled.List, contentDescription = "More", tint = OnBackground)
+                            Icon(Icons.Filled.List, contentDescription = "More", tint = MaterialTheme.colorScheme.onBackground)
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Background,
-                    titleContentColor = OnBackground,
-                    actionIconContentColor = OnBackground,
-                    navigationIconContentColor = OnBackground
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
         bottomBar = {
             if (currentRoute in listOf("home", "logs", "settings")) {
                 NavigationBar(
-                    containerColor = SurfaceBright,
-                    contentColor = OnSurfaceVariant,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     tonalElevation = 0.dp
                 ) {
                     NavigationBarItem(
@@ -100,11 +115,11 @@ fun DriveSyncApp() {
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = OnBackground,
-                            selectedTextColor = OnBackground,
-                            indicatorColor = SurfaceVariant,
-                            unselectedIconColor = OnSurfaceVariant,
-                            unselectedTextColor = OnSurfaceVariant
+                            selectedIconColor = MaterialTheme.colorScheme.onBackground,
+                            selectedTextColor = MaterialTheme.colorScheme.onBackground,
+                            indicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                     NavigationBarItem(
@@ -119,11 +134,11 @@ fun DriveSyncApp() {
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = OnBackground,
-                            selectedTextColor = OnBackground,
-                            indicatorColor = SurfaceVariant,
-                            unselectedIconColor = OnSurfaceVariant,
-                            unselectedTextColor = OnSurfaceVariant
+                            selectedIconColor = MaterialTheme.colorScheme.onBackground,
+                            selectedTextColor = MaterialTheme.colorScheme.onBackground,
+                            indicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                     NavigationBarItem(
@@ -138,11 +153,11 @@ fun DriveSyncApp() {
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = OnBackground,
-                            selectedTextColor = OnBackground,
-                            indicatorColor = SurfaceVariant,
-                            unselectedIconColor = OnSurfaceVariant,
-                            unselectedTextColor = OnSurfaceVariant
+                            selectedIconColor = MaterialTheme.colorScheme.onBackground,
+                            selectedTextColor = MaterialTheme.colorScheme.onBackground,
+                            indicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }
@@ -179,12 +194,13 @@ fun DriveSyncApp() {
                 AddEditTaskScreen(viewModel, pairId, onNavigateBack = { navController.popBackStack() })
             }
             composable("settings") {
-                SettingsScreen(onNavigateBack = { navController.popBackStack() })
+                SettingsScreen(viewModel, onNavigateBack = { navController.popBackStack() })
             }
             composable("logs") {
                 LogScreen(viewModel, onNavigateBack = { navController.popBackStack() })
             }
         }
+    }
     }
 }
 

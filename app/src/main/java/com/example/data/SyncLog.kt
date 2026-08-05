@@ -9,5 +9,6 @@ data class SyncLog(
     val folderPairId: Int?,
     val timestamp: Long = System.currentTimeMillis(),
     val status: String,
+    val fileCount: Int = 0,
     val message: String
 )

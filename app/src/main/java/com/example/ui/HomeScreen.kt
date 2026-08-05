@@ -33,10 +33,11 @@ fun HomeScreen(viewModel: DriveSyncViewModel, onNavigateToEdit: (Int) -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         GlobalSyncStatusCard(onSyncAll = {
-            folderPairs.forEach { SyncManager.triggerSync(context, it.id) }
+            folderPairs.forEach { viewModel.triggerManualSync(context, it.id) }
         })
 
         if (folderPairs.isEmpty()) {
+            SyncAnalyticsCard()
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = "No folder pairs configured.\nTap + to add one.", style = MaterialTheme.typography.bodyLarge)
             }
@@ -47,17 +48,20 @@ fun HomeScreen(viewModel: DriveSyncViewModel, onNavigateToEdit: (Int) -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
+                    SyncAnalyticsCard()
+                }
+                item {
                     Text(
                         text = "Active Folder Pairs",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = OnSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 }
                 items(folderPairs) { pair ->
                     FolderPairCard(pair = pair, onClick = { onNavigateToEdit(pair.id) }, onSync = {
-                        SyncManager.triggerSync(context, pair.id)
+                        viewModel.triggerManualSync(context, pair.id)
                     })
                 }
             }
@@ -72,7 +76,7 @@ fun GlobalSyncStatusCard(onSyncAll: () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 16.dp),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -87,7 +91,7 @@ fun GlobalSyncStatusCard(onSyncAll: () -> Unit) {
                     text = "CURRENT STATUS",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = OnSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -95,12 +99,12 @@ fun GlobalSyncStatusCard(onSyncAll: () -> Unit) {
                     text = "Ready to sync",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = OnBackground
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
             Button(
                 onClick = onSyncAll,
-                colors = ButtonDefaults.buttonColors(containerColor = Primary, contentColor = OnPrimary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
             ) {
@@ -117,7 +121,7 @@ fun FolderPairCard(pair: FolderPair, onClick: () -> Unit, onSync: () -> Unit) {
     val isSyncing = pair.lastSyncStatus.contains("Running", ignoreCase = true)
     
     val badgeColor = when {
-        isError -> ErrorContainer
+        isError -> MaterialTheme.colorScheme.errorContainer
         isSyncing -> SyncingBlue
         else -> Success
     }
@@ -128,13 +132,13 @@ fun FolderPairCard(pair: FolderPair, onClick: () -> Unit, onSync: () -> Unit) {
     }
     
     val iconBgColor = when {
-        isError -> ErrorContainer
-        pair.syncType.name.contains("UPLOAD") -> TertiaryContainer
+        isError -> MaterialTheme.colorScheme.errorContainer
+        pair.syncType.name.contains("UPLOAD") -> MaterialTheme.colorScheme.tertiaryContainer
         else -> SyncingBlue
     }
     val iconColor = when {
-        isError -> OnErrorContainer
-        pair.syncType.name.contains("UPLOAD") -> OnTertiaryContainer
+        isError -> MaterialTheme.colorScheme.errorContainer
+        pair.syncType.name.contains("UPLOAD") -> MaterialTheme.colorScheme.tertiaryContainer
         else -> OnSyncingBlue
     }
 
@@ -143,8 +147,8 @@ fun FolderPairCard(pair: FolderPair, onClick: () -> Unit, onSync: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Outline),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -180,12 +184,12 @@ fun FolderPairCard(pair: FolderPair, onClick: () -> Unit, onSync: () -> Unit) {
                             text = pair.name,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                            color = OnBackground
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
                             text = pair.syncType.name.replace("_", " ").lowercase().replaceFirstChar { it.titlecase() },
                             fontSize = 12.sp,
-                            color = OnSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -207,26 +211,41 @@ fun FolderPairCard(pair: FolderPair, onClick: () -> Unit, onSync: () -> Unit) {
             if (isSyncing) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth().height(6.dp),
-                    color = Primary,
-                    trackColor = SurfaceVariant
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text("Local:", fontSize = 12.sp, color = OnSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.width(40.dp))
-                        Text(pair.localUri, fontSize = 12.sp, color = OnSurfaceVariant, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Local:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.width(40.dp))
+                            Text(pair.localUri, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Cloud:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.width(40.dp))
+                            Text(pair.driveFolderName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    
+                    OutlinedButton(
+                        onClick = onSync,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        Text("Cloud:", fontSize = 12.sp, color = OnSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.width(40.dp))
-                        Text(pair.driveFolderName, fontSize = 12.sp, color = OnSurfaceVariant, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("Sync Now", fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -235,9 +254,92 @@ fun FolderPairCard(pair: FolderPair, onClick: () -> Unit, onSync: () -> Unit) {
                 Text(
                     text = pair.lastSyncStatus,
                     fontSize = 12.sp,
-                    color = Error
+                    color = MaterialTheme.colorScheme.error
                 )
             }
         }
+    }
+}
+
+@Composable
+fun SyncAnalyticsCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Text(
+                text = "7-Day Overview",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Stats Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                StatItem(label = "Transferred", value = "1.2 GB")
+                StatItem(label = "Storage Used", value = "45%")
+                StatItem(label = "Syncs", value = "24")
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Bar Chart
+            val data = listOf(2f, 4f, 1f, 6f, 3f, 5f, 7f)
+            val primaryColor = MaterialTheme.colorScheme.primary
+            
+            androidx.compose.foundation.Canvas(modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+            ) {
+                val maxVal = data.maxOrNull() ?: 1f
+                val barWidth = size.width / (data.size * 2)
+                val spacing = barWidth
+                
+                var startX = spacing / 2
+                
+                for (value in data) {
+                    val barHeight = (value / maxVal) * size.height
+                    drawRoundRect(
+                        color = primaryColor,
+                        topLeft = androidx.compose.ui.geometry.Offset(startX, size.height - barHeight),
+                        size = androidx.compose.ui.geometry.Size(barWidth, barHeight),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                    )
+                    startX += barWidth + spacing
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Mon", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Tue", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Wed", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Thu", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Fri", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Sat", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Sun", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+fun StatItem(label: String, value: String) {
+    Column {
+        Text(text = label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+        Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

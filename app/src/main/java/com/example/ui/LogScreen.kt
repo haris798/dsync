@@ -26,14 +26,14 @@ fun LogScreen(viewModel: DriveSyncViewModel, onNavigateBack: () -> Unit) {
         if (logs.isNotEmpty()) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { viewModel.clearLogs() }) {
-                    Text("Clear Logs", color = Primary)
+                    Text("Clear Logs", color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
 
         if (logs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                Text(text = "No sync logs yet.", style = MaterialTheme.typography.bodyLarge, color = OnSurfaceVariant)
+                Text(text = "No sync logs yet.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
@@ -46,16 +46,17 @@ fun LogScreen(viewModel: DriveSyncViewModel, onNavigateBack: () -> Unit) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, Outline),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = dateFormat.format(Date(log.timestamp)), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                            Text(text = dateFormat.format(Date(log.timestamp)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = "Status: ${log.status}", style = MaterialTheme.typography.titleSmall, color = OnBackground)
+                            Text(text = "Status: ${log.status}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                            Text(text = "Files synced: ${log.fileCount}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = log.message, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+                            Text(text = log.message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
