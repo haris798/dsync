@@ -55,8 +55,9 @@ fun DriveSyncApp() {
     val database = remember { AppDatabase.getDatabase(context) }
     val repository = remember { SyncRepository(database.folderPairDao(), database.syncLogDao()) }
     val settingsRepository = remember { SettingsRepository(context) }
+    val driveAuthRepository = remember { com.example.data.DriveAuthRepository(context) }
     val viewModel: DriveSyncViewModel = viewModel(
-        factory = DriveSyncViewModelFactory(repository, settingsRepository)
+        factory = DriveSyncViewModelFactory(repository, settingsRepository, driveAuthRepository)
     )
 
     val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()

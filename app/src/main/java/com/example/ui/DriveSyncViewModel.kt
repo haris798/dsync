@@ -15,8 +15,12 @@ import kotlinx.coroutines.launch
 
 class DriveSyncViewModel(
     private val repository: SyncRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    val driveAuthRepository: com.example.data.DriveAuthRepository
 ) : ViewModel() {
+    
+    val signedInAccount: StateFlow<com.google.android.gms.auth.api.signin.GoogleSignInAccount?> = driveAuthRepository.signedInAccount
+
 
     val themePreference: StateFlow<ThemePreference> = settingsRepository.themePreference.stateIn(
         scope = viewModelScope,
@@ -73,12 +77,13 @@ class DriveSyncViewModel(
 
 class DriveSyncViewModelFactory(
     private val repository: SyncRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val driveAuthRepository: com.example.data.DriveAuthRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DriveSyncViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DriveSyncViewModel(repository, settingsRepository) as T
+            return DriveSyncViewModel(repository, settingsRepository, driveAuthRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
