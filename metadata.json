@@ -1,0 +1,6 @@
+{
+  "name": "DriveSync",
+  "description": "Android application to sync local folders with Google Drive.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
